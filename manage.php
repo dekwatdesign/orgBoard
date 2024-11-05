@@ -1,8 +1,24 @@
+<?php
+require_once 'configs/database.php';
+
+$area_settings_sql = "  SELECT 
+                            * 
+                        FROM 
+                            area_settings AS A
+                            INNER JOIN area_sizes AS B ON A.setting_value = B.id
+                        WHERE 
+                            A.id = 1";
+$area_settings_query = mysqli_query($conn, $area_settings_sql);
+$area_settings_row = mysqli_fetch_assoc($area_settings_query);
+$area_size_width = $area_settings_row['size_width'];
+$area_size_height = $area_settings_row['size_height'];
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <base href="../" />
+    <base href="./" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Management System</title>
@@ -18,8 +34,8 @@
     <style>
         #area {
             position: relative;
-            width: 800px;
-            height: 600px;
+            width: <?php echo $area_size_width ?>px;
+            height: <?php echo $area_size_height ?>px;
             border: 1px solid #ccc;
             background-repeat: no-repeat;
             background-size: cover;
@@ -30,8 +46,8 @@
         .item {
             position: absolute;
             cursor: move;
-            width: 100px;
-            height: 100px;
+            /* width: 100px; */
+            /* height: 100px; */
         }
 
         .card-org {
@@ -64,16 +80,41 @@
                     <form id="editItemForm" enctype="multipart/form-data">
                         <input type="hidden" id="editItemId">
                         <div class="mb-3">
-                            <label for="itemName" class="form-label">Name</label>
-                            <input type="text" class="form-control" id="itemName" required>
+                            <label for="itemTitleName" class="form-label required">Title Name</label>
+                            <select id="itemTitleName" name="itemTitleName" class="form-select" required>
+                                <option value="1">นาย</option>
+                                <option value="2">นาง</option>
+                                <option value="3">นางสาว</option>
+                                <option value="4">พระ</option>
+                            </select>
                         </div>
                         <div class="mb-3">
-                            <label for="itemImage" class="form-label">Item Image</label>
-                            <input type="file" class="form-control" id="itemImage" name="itemImage">
+                            <label for="itemFirstName" class="form-label required">First Name</label>
+                            <input type="text" class="form-control" id="itemFirstName" name="itemFirstName" required>
                         </div>
                         <div class="mb-3">
-                            <label for="itemFrame" class="form-label">Frame Image</label>
-                            <input type="file" class="form-control" id="itemFrame" name="itemFrame">
+                            <label for="itemLastName" class="form-label required">Last Name</label>
+                            <input type="text" class="form-control" id="itemLastName" name="itemLastName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="itemWorkPosition" class="form-label required">Work Position</label>
+                            <input type="text" class="form-control" id="itemWorkPosition" name="itemWorkPosition" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="itemAvatar" class="form-label required">Avatar Image</label>
+                            <div class="d-flex flex-row gap-2 mb-2">
+                                <span class="mt-4 text-gray-500">Preview:</span>
+                                <img id="itemAvatarPreview" src="" alt="Avatar Preview" class="img-thumbnail mt-2 w-100px h-100px" style="object-fit: contain;">
+                            </div>
+                            <input type="file" class="form-control" accept="image/*" id="itemAvatar" name="itemAvatar">
+                        </div>
+                        <div class="mb-3">
+                            <label for="itemFrame" class="form-label required">Frame Image</label>
+                            <div class="d-flex flex-row gap-2 mb-2">
+                                <span class="mt-4 text-gray-500">Preview:</span>
+                                <img id="itemFramePreview" src="" alt="Frame Preview" class="img-thumbnail mt-2 w-100px h-100px" style="object-fit: contain;">
+                            </div>
+                            <input type="file" class="form-control" accept="image/*" id="itemFrame" name="itemFrame">
                         </div>
                         <button type="submit" class="btn btn-primary">Save changes</button>
                     </form>

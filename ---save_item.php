@@ -1,13 +1,5 @@
 <?php
-$servername = "localhost";
-$username = "root"; // Update to your database username
-$password = ""; // Update to your database password
-$dbname = "image_management";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+require_once 'configs/database.php';
 
 // Check if it's an update or create action
 $action = $_POST['action'] ?? null;
@@ -22,10 +14,10 @@ $imagePath = null;
 $framePath = null;
 
 // Upload image if provided
-if (isset($_FILES['itemImage']) && $_FILES['itemImage']['error'] == 0) {
+if (isset($_FILES['itemAvatar']) && $_FILES['itemAvatar']['error'] == 0) {
     $target_dir = "uploads/";
-    $imagePath = $target_dir . basename($_FILES["itemImage"]["name"]);
-    move_uploaded_file($_FILES["itemImage"]["tmp_name"], $imagePath);
+    $imagePath = $target_dir . basename($_FILES["itemAvatar"]["name"]);
+    move_uploaded_file($_FILES["itemAvatar"]["tmp_name"], $imagePath);
 }
 
 // Upload frame if provided

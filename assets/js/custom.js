@@ -10,7 +10,7 @@ $(document).ready(function () {
             items.forEach(item => {
                 const itemHTML = convertJsonToHtml(item);
                 const itemElement = $(`
-                    <div class="item d-flex flex-row flex-nowrap" data-id="${item.id}" style="left: ${item.x_pos}px; top: ${item.y_pos}px;">
+                    <div class="item d-flex flex-row flex-nowrap" data-id="${item.item_id}" style="left: ${item.x_pos}px; top: ${item.y_pos}px;">
                         ${itemHTML}
                         <div class="d-flex flex-column gap-1">
                             <button class="btn btn-sm btn-icon btn-secondary edit-btn">✏️</button>
@@ -25,6 +25,7 @@ $(document).ready(function () {
     }
 
     function convertJsonToHtml(data) {
+        
 
         // Find image and frame URLs from the "comp" array
         let compArr = [];
@@ -39,9 +40,28 @@ $(document).ready(function () {
 
         // Construct the HTML string
         const htmlString = `
+            <style>
+                .item-avatar-${data.item_id} {
+                    position: absolute; 
+                    width: ${data.size_width}px;
+                    height: ${data.size_height}px;
+                    background-repeat: no-repeat;
+                    background-size: contain;
+                    border-image: url('uploads/${compArr['frameIMG']}') 500 / ${data.size_height}px;
+                }
+                .item-frame-${data.item_id} {
+                    position: absolute; 
+                    width: ${data.size_width}px;
+                    height: ${data.size_height}px;
+                    background-repeat: no-repeat; 
+                    background-size: contain; 
+                    background-image: url('uploads/${compArr['leaderIMG']}');
+                    background-position: center;
+                }
+            </style>
             <div style="position: relative; width: ${data.size_width}px; height: ${data.size_height}px;" class="card-org" >
-                <div style="position: absolute; width: ${data.size_width}px; height: ${data.size_height}px; background-size: contain; border-image: url('uploads/${compArr['frameIMG']}') 500 / ${data.size_height}px;"></div>
-                <div style="position: absolute; width: ${data.size_width}px; height: ${data.size_height}px; background-size: contain; background-image: url('uploads/${compArr['leaderIMG']}'); background-position: center;"></div>
+                <div class="item-avatar-${data.item_id}"></div>
+                <div class="item-frame-${data.item_id}"></div>
             </div>
         `;
 
@@ -60,6 +80,13 @@ $(document).ready(function () {
         $('#editItemForm').trigger('reset');
         $('#editItemModal').modal('show');
         $('#editItemId').val(null);
+
+        $('#itemAvatar').val(null);
+        $('#itemAvatarPreview').attr('src', '');
+        
+        $('#itemFrame').val(null);
+        $('#itemFramePreview').attr('src', '');
+
     });
 
     $('#editItemForm').on('submit', function (e) {
@@ -76,7 +103,7 @@ $(document).ready(function () {
         itemId ? formData.append('item_id', itemId) : null;
 
         $.ajax({
-            url: 'save_item.php',
+            url: 'manage_items.php',
             type: 'POST',
             data: formData,
             processData: false,
@@ -84,6 +111,7 @@ $(document).ready(function () {
             success: function (response) {
                 $('#editItemModal').modal('hide');
                 alert(response);
+                location.reload();
                 // Reload or update item display if needed
             }
         });
@@ -93,25 +121,56 @@ $(document).ready(function () {
     $(document).on('click', '.delete-btn', function () {
         console.log('item deleted');
         const itemId = $(this).parent().data('id');
-        $.post('manage_items.php', { action: 'delete', id: itemId }, function () {
+        $.post('manage_items.php', { action: 'delete_item', id: itemId }, function () {
             loadItems();
         });
     });
 
     // Edit an item
     $(document).on('click', '.edit-btn', function () {
-        console.log('item edited');
-        itemId = $(this).parent().data('id'); // Assign value to itemId
-        $.post('manage_items.php', { action: 'get_items' }, function (data) {
-            const items = JSON.parse(data);
-            const item = items.find(i => i.id == itemId);
-            $('#editItemId').val(item.id);
-            $('#itemName').val(item.name);
-            $('#itemImage').val(item.image_url);
-            $('#itemFrame').val(item.frame_url);
+
+        $('#itemAvatar').val(null);
+        $('#itemAvatarPreview').attr('src', '');
+        $('#itemFrame').val(null);
+        $('#itemFramePreview').attr('src', '');
+
+        itemId = $(this).parent().parent().data('id'); // Assign value to itemId
+        $.post('manage_items.php', { action: 'get_comp_settings', id: itemId }, function (data) {
+            const item = JSON.parse(data);
+            $('#editItemId').val(itemId);
+            $('#itemTitleName').val(item.item_pname);
+            $('#itemFirstName').val(item.item_fname);
+            $('#itemLastName').val(item.item_lname);
+            $('#itemWorkPosition').val(item.item_work_position);
+
+            $('#itemAvatarPreview').attr('src', `./uploads/${item.item_avatar}`);
+            initIMGPreview('itemAvatar','itemAvatarPreview');
+            
+            $('#itemFramePreview').attr('src', `./uploads/${item.item_frame}`);
+            initIMGPreview('itemFrame','itemFramePreview');
+
             $('#editItemModal').modal('show');
         });
     });
+
+    function initIMGPreview(input_id, preview_id) {
+        $(`#${input_id}`).on('change', function (event) {
+            const file = event.target.files[0];
+
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    $(`#${preview_id}`).attr('src', e.target.result);
+                }
+
+                reader.readAsDataURL(file);
+            } else {
+                $(`#${preview_id}`).attr('src', '');
+                alert("Please select a valid image file.");
+            }
+        });
+    }
 
     // Drag and Drop functionality
     $(document).on('mousedown', '.item', function () {
@@ -121,7 +180,7 @@ $(document).ready(function () {
                 const itemId = $(this).data('id');
                 const { left, top } = ui.position;
                 $.post('manage_items.php', {
-                    action: 'update_position',
+                    action: 'update_item_position',
                     id: itemId,
                     x_pos: left,
                     y_pos: top

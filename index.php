@@ -1,13 +1,5 @@
 <?php
-$servername = "localhost";
-$username = "root"; // เปลี่ยนเป็นชื่อผู้ใช้ฐานข้อมูลของคุณ
-$password = ""; // เปลี่ยนเป็นรหัสผ่านฐานข้อมูลของคุณ
-$dbname = "image_management";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+require_once 'configs/database.php';
 
 // ดึงข้อมูลไอเท็มทั้งหมด
 $itemsResult = $conn->query("SELECT * FROM items");
@@ -21,12 +13,25 @@ $areaResult = $conn->query("SELECT background_url FROM area WHERE id=1");
 $area = $areaResult->fetch_assoc();
 $background_url = $area['background_url'];
 
+$area_settings_sql = "  SELECT 
+                            * 
+                        FROM 
+                            area_settings AS A
+                            INNER JOIN area_sizes AS B ON A.setting_value = B.id
+                        WHERE 
+                            A.id = 1";
+$area_settings_query = mysqli_query($conn, $area_settings_sql);
+$area_settings_row = mysqli_fetch_assoc($area_settings_query);
+$area_size_width = $area_settings_row['size_width'];
+$area_size_height = $area_settings_row['size_height'];
+
 $conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+    <base href="./" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Display - Frontend</title>
@@ -37,8 +42,8 @@ $conn->close();
     <style>
         #display-area {
             position: relative;
-            width: 800px;
-            height: 600px;
+            width: <?php echo $area_size_width ?>px;
+            height: <?php echo $area_size_height ?>px;
             background-image: url('<?php echo $background_url; ?>');
             background-size: cover;
             background-position: center;
