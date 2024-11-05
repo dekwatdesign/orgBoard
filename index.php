@@ -1,26 +1,53 @@
+<?php
+$servername = "localhost";
+$username = "root"; // เปลี่ยนเป็นชื่อผู้ใช้ฐานข้อมูลของคุณ
+$password = ""; // เปลี่ยนเป็นรหัสผ่านฐานข้อมูลของคุณ
+$dbname = "image_management";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// ดึงข้อมูลไอเท็มทั้งหมด
+$itemsResult = $conn->query("SELECT * FROM items");
+$items = [];
+while ($row = $itemsResult->fetch_assoc()) {
+    $items[] = $row;
+}
+
+// ดึงภาพพื้นหลังของ Area
+$areaResult = $conn->query("SELECT background_url FROM area WHERE id=1");
+$area = $areaResult->fetch_assoc();
+$background_url = $area['background_url'];
+
+$conn->close();
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Management System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
+    <title>Image Display - Frontend</title>
+    <link rel="stylesheet" href="./assets/css/style.bundle.css">
+    <link rel="stylesheet" href="./assets/css/fonts.css">
+    <link rel="stylesheet" href="./assets/css/fontawesome.css">
+    <link rel="stylesheet" href="./assets/css/custom.css">
     <style>
-        #area {
+        #display-area {
             position: relative;
             width: 800px;
             height: 600px;
-            border: 1px solid #ccc;
+            background-image: url('<?php echo $background_url; ?>');
             background-size: cover;
             background-position: center;
+            border: 1px solid #ccc;
             margin: 20px auto;
         }
 
-        .item {
+        .display-item {
             position: absolute;
-            cursor: move;
             width: 100px;
             height: 100px;
         }
@@ -29,78 +56,19 @@
 
 <body>
     <div class="container">
-        <h1 class="text-center mt-4">Image Management System</h1>
-        <div class="mb-3">
-            <button class="btn btn-primary" id="addItemBtn">Add Item</button>
-            <button class="btn btn-secondary" id="editAreaBtn">Edit Area Background</button>
+        <h1 class="text-center mt-4">Image Display</h1>
+        <div id="display-area" style="background-image: url('<?php echo $background_url; ?>');">
+            <?php foreach ($items as $item): ?>
+                <div class="display-item"
+                    style="left: <?php echo $item['x_pos']; ?>px; top: <?php echo $item['y_pos']; ?>px; width: <?php echo $item['size_width']; ?>px; height: <?php echo $item['size_height']; ?>px;">
+                    <img src="<?php echo $item['image_url']; ?>" class="img-fluid"
+                        style="border-image: url('<?php echo $item['frame_url']; ?>') 30 / 10px;">
+                </div>
+            <?php endforeach; ?>
         </div>
-        <div id="area"></div>
+
     </div>
-
-    <!-- Modal for editing item -->
-    <div class="modal fade" id="editItemModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Item</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editItemForm" enctype="multipart/form-data">
-                        <input type="hidden" id="editItemId">
-                        <div class="mb-3">
-                            <label for="itemName" class="form-label">Name</label>
-                            <input type="text" class="form-control" id="itemName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="itemPosition" class="form-label">Position</label>
-                            <input type="text" class="form-control" id="itemPosition" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="itemImage" class="form-label">Item Image</label>
-                            <input type="file" class="form-control" id="itemImage" name="itemImage">
-                        </div>
-                        <div class="mb-3">
-                            <label for="itemFrame" class="form-label">Frame Image</label>
-                            <input type="file" class="form-control" id="itemFrame" name="itemFrame">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal for Editing Area Background -->
-    <div class="modal fade" id="editAreaModal" tabindex="-1" aria-labelledby="editAreaModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editAreaModalLabel">Edit Area Background</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editAreaForm" enctype="multipart/form-data">
-                        <div class="mb-3">
-                            <label for="areaBackground" class="form-label">Background Image</label>
-                            <input type="file" class="form-control" id="areaBackground" name="areaBackground">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Include jQuery first -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- Include jQuery UI for draggable functionality -->
-    
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js"></script>
+    <script src="./assets/js/scripts.bundle.js"></script>
 </body>
 
 </html>

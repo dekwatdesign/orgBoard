@@ -50,9 +50,25 @@ switch ($action) {
         break;
 
     case 'get_items':
-        $result = $conn->query("SELECT * FROM items");
+        $sql = "SELECT 
+                    A.id AS item_id,
+                    A.name,
+                    A.x_pos,
+                    A.y_pos,
+                    B.size_width,
+                    B.size_height
+                FROM 
+                    items AS A
+                    INNER JOIN items_sizes AS B ON A.item_sizes_id = B.id";
+        $result = $conn->query($sql);
         $items = [];
         while($row = $result->fetch_assoc()) {
+            $item_id = $row['item_id'];
+            $comp_result = $conn->query("SELECT * FROM items_components WHERE item_id='$item_id' ");
+            while($comp_row = $comp_result->fetch_assoc()) :
+                $row['comp'][] = $comp_row;
+            endwhile;
+
             $items[] = $row;
         }
         echo json_encode($items);

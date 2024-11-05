@@ -1,0 +1,5 @@
+RewriteEngine On
+RewriteBase /orgBoard/
+
+# กฎเพื่อเปลี่ยน URL จาก manage.php เป็น /manage/
+RewriteRule ^manage/?$ manage.php [L]
