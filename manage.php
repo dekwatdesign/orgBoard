@@ -57,9 +57,9 @@ $area_size_height = $area_settings_row['size_height'];
     <div class="container">
         <h1 class="text-center mt-4">Image Management System</h1>
         <div class="mb-3">
-            <button class="btn btn-icon btn-primary btn-add-item" data-type="1"><i class="fa-solid fa-clipboard-user fs-2"></i></button>
-            <button class="btn btn-icon btn-primary btn-add-item" data-type="2"><i class="fa-regular fa-image fs-2"></i></button>
-            <button class="btn btn-icon btn-primary btn-add-item" data-type="3"><i class="fa-solid fa-font fs-2"></i></button>
+            <button class="btn btn-icon btn-primary add-btn" data-type="1"><i class="fa-solid fa-clipboard-user fs-2"></i></button>
+            <button class="btn btn-icon btn-primary add-btn" data-type="2"><i class="fa-regular fa-image fs-2"></i></button>
+            <button class="btn btn-icon btn-primary add-btn" data-type="3"><i class="fa-solid fa-font fs-2"></i></button>
             <button class="btn btn-secondary" id="editAreaBtn">Edit Area Background</button>
         </div>
         <div id="area"></div>

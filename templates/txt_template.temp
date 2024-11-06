@@ -1,0 +1,15 @@
+<style>
+    .item-txt-card-{{item_id}} {
+        width: fit-content;
+        height: fit-content;
+        position: relative;
+    }
+    .item-txt-txt-{{item_id}} {
+        font-size: {{txt_size}}px;
+        font-weight: {{txt_weight}};
+        color: {{txt_color}};
+    }
+</style>
+<div class="item-txt-card-{{item_id}}">
+    <span class="item-txt-txt-{{item_id}}">{{txt_text}}</span>
+</div>

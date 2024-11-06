@@ -59,10 +59,7 @@ $conn->close();
 <body>
     <div class="container">
         <h1 class="text-center mt-4">Image Display</h1>
-        <div class="scroll pe-5"
-            data-kt-scroll="true"
-            data-kt-scroll-height="auto"
-            data-kt-scroll-offset="100px">
+        <div class="scroll pe-5" data-kt-scroll="true" data-kt-scroll-height="auto" data-kt-scroll-offset="100px">
             <div id="display-area"></div>
         </div>
 
@@ -89,7 +86,7 @@ $conn->close();
                         // Use Promise to handle the asynchronous HTML generation
                         convertJsonToHtml(item).then((itemHTML) => {
                             const itemElement = $(`
-                                                    <div class="item d-flex flex-row flex-nowrap" data-id="${item.item_id}" style="left: ${item.x_pos}px; top: ${item.y_pos}px;">
+                                                    <div class="item d-flex flex-row flex-nowrap" data-id="${item.id}" style="left: ${item.x_pos}px; top: ${item.y_pos}px;">
                                                         ${itemHTML}
                                                     </div>
                                                 `);
@@ -111,16 +108,20 @@ $conn->close();
             }
 
             function convertJsonToHtml(data) {
-
                 return new Promise((resolve, reject) => {
-                    let compArr = [];
 
                     const comp = data.comp;
 
-                    // Load the template and populate placeholders
-                    $.get("templates/leader_card_template.temp", function(template) {
+                    let replacements = [];
+                    let templateFile = '';
 
-                        const replacements = [{
+                    if (data.type_id == 1) {
+                        templateFile = 'leader_card_template.temp';
+                        replacements = [{
+                                placeholder: '{{item_id}}',
+                                value: data.id
+                            },
+                            {
                                 placeholder: '{{item_pname}}',
                                 value: comp.item_pname
                             },
@@ -132,15 +133,9 @@ $conn->close();
                                 placeholder: '{{item_lname}}',
                                 value: comp.item_lname
                             },
-
                             {
                                 placeholder: '{{item_work_position}}',
                                 value: comp.item_work_position
-                            },
-
-                            {
-                                placeholder: '{{item_id}}',
-                                value: data.item_id
                             },
                             {
                                 placeholder: '{{item_bg}}',
@@ -148,11 +143,11 @@ $conn->close();
                             },
                             {
                                 placeholder: '{{size_width}}',
-                                value: data.size_width
+                                value: comp.size_width
                             },
                             {
                                 placeholder: '{{size_height}}',
-                                value: data.size_height
+                                value: comp.size_height
                             },
                             {
                                 placeholder: '{{item_frame_size}}',
@@ -167,6 +162,52 @@ $conn->close();
                                 value: comp.item_frame
                             }
                         ];
+                    } else if (data.type_id == 2) {
+                        templateFile = 'img_template.temp';
+                        replacements = [{
+                                placeholder: '{{item_id}}',
+                                value: data.id
+                            },
+                            {
+                                placeholder: '{{img_width}}',
+                                value: comp.img_width
+                            },
+                            {
+                                placeholder: '{{img_height}}',
+                                value: comp.img_height
+                            },
+                            {
+                                placeholder: '{{img_filename}}',
+                                value: comp.item_img
+                            },
+                        ];
+                    } else if (data.type_id == 3) {
+                        templateFile = 'txt_template.temp';
+                        replacements = [{
+                                placeholder: '{{item_id}}',
+                                value: data.id
+                            },
+                            {
+                                placeholder: '{{txt_text}}',
+                                value: comp.item_txt
+                            },
+                            {
+                                placeholder: '{{txt_size}}',
+                                value: comp.item_txt_size
+                            },
+                            {
+                                placeholder: '{{txt_weight}}',
+                                value: comp.item_txt_weight
+                            },
+                            {
+                                placeholder: '{{txt_color}}',
+                                value: comp.item_txt_color
+                            },
+                        ];
+                    }
+
+                    // Load the template and populate placeholders
+                    $.get(`templates/${templateFile}`, function(template) {
 
                         // Use the array to replace the placeholders in the template
                         let htmlString = template;

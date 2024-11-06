@@ -48,55 +48,64 @@ switch ($action) {
             }
         endif;
 
+        // IMG ===================
+        $img_file = null;
+        if (isset($_FILES['itemIMG']) && $_FILES['itemIMG']['error'] == 0):
+            $img_file_ext = pathinfo($_FILES['itemIMG']['name'], PATHINFO_EXTENSION);
+            $img_file_name_new = uniqid('img_' . date('YmdHis'), true) . '.' . $img_file_ext;
+            $img_upload_path = $uploadDir . $img_file_name_new;
+
+            if (move_uploaded_file($_FILES['itemIMG']['tmp_name'], $img_upload_path)) {
+                $img_file = $img_file_name_new;
+            }
+        endif;
+
         $itemName = 'item_' . date('YmdHis');
-        $itemSize = $_POST['itemSize'];
+        $itemType = $_POST['itemType'];
 
-        $sql = "INSERT INTO 
-                    items (
-                        `name`,
-                        type_id,
-                        x_pos,
-                        y_pos,
-                        item_sizes_id
-                    ) 
-                VALUES 
-                    (
-                        '$itemName',
-                        1,
-                        0,
-                        0,
-                        '$itemSize'
-                    )";
+        $sql = "INSERT INTO items ( `name`, type_id, x_pos, y_pos ) VALUES ( '$itemName', '$itemType', 0, 0 )";
         $conn->query($sql);
-
-        $itemTitleName = $_POST['itemTitleName'];
-        $itemFirstName = $_POST['itemFirstName'];
-        $itemLastName = $_POST['itemLastName'];
-        $itemWorkPosition = $_POST['itemWorkPosition'];
-        $itemFrameSize = $_POST['itemFrameSize'];
-
-        $component_set = [
-            1 => $itemTitleName,
-            2 => $itemFirstName,
-            3 => $itemLastName,
-            4 => $itemWorkPosition,
-            5 => $avatar_file,
-            6 => $frame_file,
-            7 => $itemFrameSize,
-            8 => $bg_file
-        ];
-
         $items_last_id = $conn->insert_id;
 
-        foreach ($component_set as $comp_id => $comp_value):
-            $ins_arr = [
-                'item_id' => $items_last_id,
-                'item_setting_id' => $comp_id,
-                'item_value' => $comp_value
+        $component_set = [];
+
+        if ($itemType == 1):
+            $component_set = [
+                1 => $_POST['itemTitleName'],
+                2 => $_POST['itemFirstName'],
+                3 => $_POST['itemLastName'],
+                4 => $_POST['itemWorkPosition'],
+                5 => $avatar_file,
+                6 => $frame_file,
+                7 => $_POST['itemFrameSize'],
+                8 => $bg_file,
+                9 => $_POST['itemSize'],
             ];
-            $sql = generateSQLInsert('items_components', $ins_arr);
-            $conn->query($sql);
-        endforeach;
+        elseif ($itemType == 2):
+            $component_set = [
+                10 => $img_file,
+                11 => $_POST['itemSizeIMG'],
+            ];
+        elseif ($itemType == 3):
+            $component_set = [
+                12 => $_POST['itemTXT'],
+                13 => $_POST['itemTXTSize'],
+                14 => $_POST['itemTXTWeight'],
+                15 => $_POST['itemTXTColor'],
+            ];
+        endif;
+
+        if (count($component_set) > 0):
+            foreach ($component_set as $comp_id => $comp_value):
+                $ins_arr = [
+                    'item_id' => $items_last_id,
+                    'item_setting_id' => $comp_id,
+                    'item_value' => $comp_value
+                ];
+                $sql = generateSQLInsert('items_components', $ins_arr);
+                $conn->query($sql);
+            endforeach;
+        endif;
 
         echo "Added";
         break;
@@ -104,6 +113,7 @@ switch ($action) {
     case 'copy_item':
 
         $item_id = $_POST['id'];
+        $type_id = $_POST['type_id'];
 
         $item_info_sql = "SELECT * FROM items WHERE id='$item_id'";
         $item_info_result = $conn->query($item_info_sql);
@@ -112,30 +122,9 @@ switch ($action) {
         $itemName = 'item_' . date('YmdHis');
         $itemSize = $item_info_row['item_sizes_id'];
 
-        $sql = "INSERT INTO 
-                    items (
-                        `name`,
-                        type_id,
-                        x_pos,
-                        y_pos,
-                        item_sizes_id
-                    ) 
-                VALUES 
-                    (
-                        '$itemName',
-                        1,
-                        0,
-                        0,
-                        '$itemSize'
-                    )";
+        $sql = "INSERT INTO items ( `name`, type_id, x_pos, y_pos ) VALUES ( '$itemName', '$type_id', 0, 0 )";
         $conn->query($sql);
         $item_last_id = $conn->insert_id;
-
-        $itemTitleName = '';
-        $itemFirstName = '';
-        $itemLastName = '';
-        $itemWorkPosition = '';
-        $itemFrameSize = '';
 
         $component_set = [];
 
@@ -147,7 +136,7 @@ switch ($action) {
 
         // Avatar ===================
         if (file_exists($uploadDir . $component_set[5]) && strlen($component_set[5]) > 0) {
-            $avatar_file_ext = pathinfo($uploadDir. $component_set[5], PATHINFO_EXTENSION);
+            $avatar_file_ext = pathinfo($uploadDir . $component_set[5], PATHINFO_EXTENSION);
             $avatar_file_name_new = uniqid('avatar_' . date('YmdHis'), true) . '.' . $avatar_file_ext;
             $avatar_upload_path = $uploadDir . $avatar_file_name_new;
 
@@ -178,6 +167,17 @@ switch ($action) {
             }
         }
 
+        // IMG ===================
+        if (file_exists($uploadDir . $component_set[10]) && strlen($component_set[10]) > 0) {
+            $img_file_ext = pathinfo($uploadDir . $component_set[10], PATHINFO_EXTENSION);
+            $img_file_name_new = uniqid('img_' . date('YmdHis'), true) . '.' . $img_file_ext;
+            $img_upload_path = $uploadDir . $img_file_name_new;
+
+            if (copy($uploadDir . $component_set[10], $img_upload_path)) {
+                $component_set[10] = $img_file_name_new;
+            }
+        }
+
         $ins_sql = [];
         foreach ($component_set as $comp_id => $comp_value):
             $ins_arr = [
@@ -196,10 +196,6 @@ switch ($action) {
 
     case 'update_item':
         $item_id = $_POST['item_id'];
-        $item_size = $_POST['itemSize'];
-
-        $update_item_sql = "UPDATE items SET item_sizes_id='$item_size' WHERE id='$item_id'";
-        $conn->query($update_item_sql);
 
         // Avatar ===================
         $avatar_sql = " SELECT
@@ -279,35 +275,89 @@ switch ($action) {
             }
         endif;
 
-        $item_title_name = $_POST['itemTitleName'];
-        $item_first_name = $_POST['itemFirstName'];
-        $item_last_name = $_POST['itemLastName'];
-        $item_work_position = $_POST['itemWorkPosition'];
-        $item_frame_size = $_POST['itemFrameSize'];
+        // IMG ===================
+        $img_sql = " SELECT
+                        B.item_value 
+                    FROM
+                        items AS A
+                        INNER JOIN items_components AS B ON A.id = B.item_id 
+                    WHERE
+                        A.id = '$item_id' AND
+                        B.item_setting_id = 10";
+        $img_query = $conn->query($img_sql);
+        $img_row = $img_query->fetch_assoc();
+        $img_file = $img_row['item_value'];
 
-        $sql = "UPDATE items_components SET item_value='$item_title_name' WHERE item_id='$item_id' AND item_setting_id=1;";
-        $sql .= "UPDATE items_components SET item_value='$item_first_name' WHERE item_id='$item_id' AND item_setting_id=2;";
-        $sql .= "UPDATE items_components SET item_value='$item_last_name' WHERE item_id='$item_id' AND item_setting_id=3;";
-        $sql .= "UPDATE items_components SET item_value='$item_work_position' WHERE item_id='$item_id' AND item_setting_id=4;";
-        $sql .= "UPDATE items_components SET item_value='$avatar_file' WHERE item_id='$item_id' AND item_setting_id=5;";
-        $sql .= "UPDATE items_components SET item_value='$frame_file' WHERE item_id='$item_id' AND item_setting_id=6;";
-        $sql .= "UPDATE items_components SET item_value='$item_frame_size' WHERE item_id='$item_id' AND item_setting_id=7;";
-        $sql .= "UPDATE items_components SET item_value='$bg_file' WHERE item_id='$item_id' AND item_setting_id=8;";
+        if (isset($_FILES['itemIMG']) && $_FILES['itemIMG']['error'] == 0):
+            if (file_exists($uploadDir . $img_file) && strlen($img_file) > 0) {
+                unlink($uploadDir . $img_file);
+            }
+            $img_file_ext = pathinfo($_FILES['itemIMG']['name'], PATHINFO_EXTENSION);
+            $img_file_name_new = uniqid('img_' . date('YmdHis'), true) . '.' . $img_file_ext;
+            $img_upload_path = $uploadDir . $img_file_name_new;
 
-        $conn->multi_query($sql);
+            if (move_uploaded_file($_FILES['itemIMG']['tmp_name'], $img_upload_path)) {
+                $img_file = $img_file_name_new;
+            }
+        endif;
+
+        $itemType = $_POST['itemType'];
+        $component_set = [];
+
+        if ($itemType == 1):
+            $component_set = [
+                1 => $_POST['itemTitleName'],
+                2 => $_POST['itemFirstName'],
+                3 => $_POST['itemLastName'],
+                4 => $_POST['itemWorkPosition'],
+                5 => $avatar_file,
+                6 => $frame_file,
+                7 => $_POST['itemFrameSize'],
+                8 => $bg_file,
+                9 => $_POST['itemSize'],
+            ];
+        elseif ($itemType == 2):
+            $component_set = [
+                10 => $img_file,
+                11 => $_POST['itemSizeIMG'],
+            ];
+        elseif ($itemType == 3):
+            $component_set = [
+                12 => $_POST['itemTXT'],
+                13 => $_POST['itemTXTSize'],
+                14 => $_POST['itemTXTWeight'],
+                15 => $_POST['itemTXTColor'],
+            ];
+        endif;
+
+        if (count($component_set) > 0):
+
+            $sql = [];
+
+            foreach ($component_set as $comp_id => $comp_value):
+                $sql[] = "UPDATE items_components SET item_value='$comp_value' WHERE item_id='$item_id' AND item_setting_id=$comp_id";
+            endforeach;
+
+            if (count($sql) > 0):
+                $sql = implode(';', $sql);
+                $conn->multi_query($sql);
+            endif;
+
+        endif;
+
         echo "Updated";
         break;
 
     case 'delete_item':
         $id = $_POST['id'];
-
-        $sql = "DELETE FROM items WHERE id=$id";
-        $conn->query($sql);
-
         $sql = "DELETE FROM items_components WHERE item_id=$id";
-        $conn->query($sql);
-
-        echo "Deleted";
+        if ($conn->query($sql) === TRUE) {
+            $sql_m = "DELETE FROM items WHERE id=$id";
+            $conn->query($sql_m);
+            echo "Deleted";
+        } else {
+            echo "Error deleting record: " . $conn->error;
+        }
         break;
 
     case 'update_item_position':
@@ -322,11 +372,6 @@ switch ($action) {
     case 'get_comp_settings':
         $item_id = $_POST['id'];
         $item_comp = [];
-
-        $info_sql = "SELECT item_sizes_id FROM items WHERE id='$item_id'";
-        $info_result = $conn->query($info_sql);
-        $info_row = $info_result->fetch_assoc();
-        $item_comp['item_size'] = $info_row['item_sizes_id'];
 
         $sql = "SELECT
                     A.item_value,
@@ -347,20 +392,13 @@ switch ($action) {
         break;
 
     case 'get_items':
-        $sql = "SELECT 
-                    A.id AS item_id,
-                    A.name,
-                    A.x_pos,
-                    A.y_pos,
-                    B.size_width,
-                    B.size_height
-                FROM 
-                    items AS A
-                    INNER JOIN items_sizes AS B ON A.item_sizes_id = B.id";
+
+        $sql = "SELECT * FROM items";
         $result = $conn->query($sql);
         $items = [];
         while ($row = $result->fetch_assoc()) {
-            $item_id = $row['item_id'];
+            $item_id = $row['id'];
+            $type_id = $row['type_id'];
             $comp_sql = "   SELECT
                                 B.setting_name,
                                 A.item_value 
@@ -368,22 +406,54 @@ switch ($action) {
                                 items_components AS A
                                 INNER JOIN items_settings AS B ON A.item_setting_id = B.id
                             WHERE
-                                A.item_id='$item_id'";
+                                A.item_id='$item_id' ;";
             $comp_result = $conn->query($comp_sql);
+
             while ($comp_row = $comp_result->fetch_assoc()):
+
                 if ($comp_row['setting_name'] == 'item_pname'):
                     $setting_sql = "SELECT prefix_title FROM prefix_name WHERE id='" . $comp_row['item_value'] . "'";
                     $setting_result = $conn->query($setting_sql);
                     $setting_row = $setting_result->fetch_assoc();
                     $row['comp'][$comp_row['setting_name']] = $setting_row['prefix_title'];
+
                 elseif ($comp_row['setting_name'] == 'item_frame_size'):
                     $setting_sql = "SELECT size_px FROM items_frame_size WHERE id='" . $comp_row['item_value'] . "'";
                     $setting_result = $conn->query($setting_sql);
                     $setting_row = $setting_result->fetch_assoc();
                     $row['comp'][$comp_row['setting_name']] = $setting_row['size_px'];
+
+                elseif ($comp_row['setting_name'] == 'item_size'):
+                    $setting_sql = "SELECT size_width, size_height FROM items_sizes WHERE id='" . $comp_row['item_value'] . "'";
+                    $setting_result = $conn->query($setting_sql);
+                    $setting_row = $setting_result->fetch_assoc();
+                    $row['comp']['size_width'] = $setting_row['size_width'];
+                    $row['comp']['size_height'] = $setting_row['size_height'];
+
+                elseif ($comp_row['setting_name'] == 'item_img_size'):
+                    $setting_sql = "SELECT size_width, size_height FROM global_sizes WHERE id='" . $comp_row['item_value'] . "'";
+                    $setting_result = $conn->query($setting_sql);
+                    $setting_row = $setting_result->fetch_assoc();
+                    $row['comp']['img_width'] = $setting_row['size_width'];
+                    $row['comp']['img_height'] = $setting_row['size_width'];
+
+                elseif ($comp_row['setting_name'] == 'item_txt_size'):
+                    $setting_sql = "SELECT size_px FROM font_sizes WHERE id='" . $comp_row['item_value'] . "'";
+                    $setting_result = $conn->query($setting_sql);
+                    $setting_row = $setting_result->fetch_assoc();
+                    $row['comp'][$comp_row['setting_name']] = $setting_row['size_px'];
+
+                elseif ($comp_row['setting_name'] == 'item_txt_weight'):
+                    $setting_sql = "SELECT weight_value FROM font_weights WHERE id='" . $comp_row['item_value'] . "'";
+                    $setting_result = $conn->query($setting_sql);
+                    $setting_row = $setting_result->fetch_assoc();
+                    $row['comp'][$comp_row['setting_name']] = $setting_row['weight_value'];
+
                 else:
                     $row['comp'][$comp_row['setting_name']] = $comp_row['item_value'];
+
                 endif;
+
             endwhile;
             $items[] = $row;
         }

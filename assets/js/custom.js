@@ -12,13 +12,14 @@ $(document).ready(function () {
             items.forEach(item => {
                 // Use Promise to handle the asynchronous HTML generation
                 convertJsonToHtml(item).then((itemHTML) => {
+
                     const itemElement = $(`
-                        <div class="item d-flex flex-row flex-nowrap" data-id="${item.item_id}" style="left: ${item.x_pos}px; top: ${item.y_pos}px;">
-                            ${itemHTML} <!-- Insert the HTML returned by convertJsonToHtml -->
+                        <div class="item d-flex flex-row flex-nowrap" data-id="${item.id}" style="left: ${item.x_pos}px; top: ${item.y_pos}px;">
+                            ${itemHTML}
                             <div class="d-flex flex-column gap-1 ps-1">
-                                <button class="btn btn-sm btn-icon btn-secondary edit-btn">✏️</button>
-                                <button class="btn btn-sm btn-icon btn-secondary copy-btn">📋</button>
-                                <button class="btn btn-sm btn-icon btn-secondary delete-btn">🗑️</button>
+                                <button data-type="${item.type_id}" class="btn btn-sm btn-icon btn-secondary edit-btn">✏️</button>
+                                <button data-type="${item.type_id}" class="btn btn-sm btn-icon btn-secondary copy-btn">📋</button>
+                                <button data-type="${item.type_id}" class="btn btn-sm btn-icon btn-secondary delete-btn">🗑️</button>
                             </div>
                         </div>
                     `);
@@ -33,28 +34,50 @@ $(document).ready(function () {
 
     function convertJsonToHtml(data) {
         return new Promise((resolve, reject) => {
-            let compArr = [];
 
             const comp = data.comp;
 
-            // Load the template and populate placeholders
-            $.get("templates/leader_card_template.temp", function (template) {
+            let replacements = [];
+            let templateFile = '';
 
-                const replacements = [
+            if (data.type_id == 1) {
+                templateFile = 'leader_card_template.temp';
+                replacements = [
+                    { placeholder: '{{item_id}}', value: data.id },
                     { placeholder: '{{item_pname}}', value: comp.item_pname },
                     { placeholder: '{{item_fname}}', value: comp.item_fname },
                     { placeholder: '{{item_lname}}', value: comp.item_lname },
-
                     { placeholder: '{{item_work_position}}', value: comp.item_work_position },
-
-                    { placeholder: '{{item_id}}', value: data.item_id },
                     { placeholder: '{{item_bg}}', value: comp.item_bg },
-                    { placeholder: '{{size_width}}', value: data.size_width },
-                    { placeholder: '{{size_height}}', value: data.size_height },
+                    { placeholder: '{{size_width}}', value: comp.size_width },
+                    { placeholder: '{{size_height}}', value: comp.size_height },
                     { placeholder: '{{item_frame_size}}', value: comp.item_frame_size },
                     { placeholder: '{{item_avatar}}', value: comp.item_avatar },
                     { placeholder: '{{item_frame}}', value: comp.item_frame }
                 ];
+            }
+            else if (data.type_id == 2) {
+                templateFile = 'img_template.temp';
+                replacements = [
+                    { placeholder: '{{item_id}}', value: data.id },
+                    { placeholder: '{{img_width}}', value: comp.img_width },
+                    { placeholder: '{{img_height}}', value: comp.img_height },
+                    { placeholder: '{{img_filename}}', value: comp.item_img },
+                ];
+            }
+            else if (data.type_id == 3) {
+                templateFile = 'txt_template.temp';
+                replacements = [
+                    { placeholder: '{{item_id}}', value: data.id },
+                    { placeholder: '{{txt_text}}', value: comp.item_txt },
+                    { placeholder: '{{txt_size}}', value: comp.item_txt_size },
+                    { placeholder: '{{txt_weight}}', value: comp.item_txt_weight },
+                    { placeholder: '{{txt_color}}', value: comp.item_txt_color },
+                ];
+            }
+
+            // Load the template and populate placeholders
+            $.get(`templates/${templateFile}`, function (template) {
 
                 // Use the array to replace the placeholders in the template
                 let htmlString = template;
@@ -78,110 +101,74 @@ $(document).ready(function () {
         });
     }
 
-    $(document).on('click', '.copy-btn', function () {
-        const itemId = $(this).parent().parent().data('id');
-        $.post('manage_items.php', { action: 'copy_item', id: itemId }, function (data) {
-            loadItems();
+    $('#editItemForm').on('submit', function (e) {
+        e.preventDefault();
+
+        const itemId = $('#editItemId').val(); // Add item ID if needed
+        const itemAction = itemId != '' ? 'update_item' : 'add_item'; // Determine the action based on item ID
+
+        const formData = new FormData(this);
+        formData.append('action', itemAction);
+
+        itemId ? formData.append('item_id', itemId) : null;
+
+        $.ajax({
+            url: 'manage_items.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                $('#editItemModal').modal('hide');
+                alert(response);
+                loadItems();
+                // Reload or update item display if needed
+            }
         });
     });
 
     // Add new item
-    $('.btn-add-item').on('click', function () {
-
+    $(document).on('click', '.add-btn', function () {
         let itemType = $(this).data('type');
-        loadForm(itemType);
+        loadForm(itemType)
+            .then(() => {
+                $('#editItemForm').trigger('reset');
 
-        $('#editItemForm').trigger('reset');
-        $('#editItemId').val(null);
+                if (itemType == 1) {
+                    // Setup Modal
+                    $('#editItemModal .modal-title').html('Add Card');
+                    $('#editItemModal .modal-dialog').attr('class', 'modal-dialog modal-lg');
+                    // Setup Form
+                    $('#itemAvatarPreview').attr('src', '');
+                    initIMGPreview('itemAvatar', 'itemAvatarPreview');
 
-        if (itemType == 1) {
-            // Setup Modal
-            $('#editItemModal .modal-title').html('Add Card');
-            $('#editItemModal .modal-dialog').attr('class', 'modal-dialog modal-lg');
-            // Setup Form
-            $('#itemAvatarPreview').attr('src', '');
-            initIMGPreview('itemAvatar', 'itemAvatarPreview');
+                    $('#itemBGPreview').attr('src', '');
+                    initIMGPreview('itemBG', 'itemBGPreview');
 
-            $('#itemBGPreview').attr('src', '');
-            initIMGPreview('itemBG', 'itemBGPreview');
+                    $('#itemFramePreview').attr('src', '');
+                    initIMGPreview('itemFrame', 'itemFramePreview');
+                }
+                else if (itemType == 2) {
+                    // Setup Modal
+                    $('#editItemModal .modal-title').html('Add Image');
+                    $('#editItemModal .modal-dialog').attr('class', 'modal-dialog');
+                    // Setup Form
+                    $('#itemIMGPreview').attr('src', '');
+                    initIMGPreview('itemIMG', 'itemIMGPreview');
 
-            $('#itemFramePreview').attr('src', '');
-            initIMGPreview('itemFrame', 'itemFramePreview');
-        }
-        else if (itemType == 2) {
-            // Setup Modal
-            $('#editItemModal .modal-title').html('Add Image');
-            $('#editItemModal .modal-dialog').attr('class', 'modal-dialog');
-            // Setup Form
-            $('#itemIMGPreview').attr('src', '');
-            initIMGPreview('itemIMG', 'itemIMGPreview');
+                }
+                else if (itemType == 3) {
 
-        }
-        else if (itemType == 3) {
+                    $('#editItemModal .modal-title').html('Add Text');
+                    $('#editItemModal .modal-dialog').attr('class', 'modal-dialog');
 
-            $('#editItemModal .modal-title').html('Add Text');
-            $('#editItemModal .modal-dialog').attr('class', 'modal-dialog');
+                }
 
-        }
-
-        $('#editItemModal').modal('show');
-
-    });
-
-    $('#editItemForm').on('submit', function (e) {
-        e.preventDefault();
-
-        console.log('item submitted');
-
-        const itemId = $('#editItemId').val(); // Add item ID if needed
-        const itemAction = itemId ? 'update_item' : 'add_item';
-
-        const formData = new FormData(this);
-        formData.append('action', itemAction);
-
-        itemId ? formData.append('item_id', itemId) : null;
-
-        $.ajax({
-            url: 'manage_items.php',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (response) {
-                $('#editItemModal').modal('hide');
-                alert(response);
-                loadItems();
-                // Reload or update item display if needed
-            }
-        });
-    });
-
-    $('#editIMGForm').on('submit', function (e) {
-        e.preventDefault();
-
-        console.log('item submitted');
-
-        const itemId = $('#editIMGId').val(); // Add item ID if needed
-        const itemAction = itemId ? 'update_item' : 'add_item';
-
-        const formData = new FormData(this);
-        formData.append('action', itemAction);
-
-        itemId ? formData.append('item_id', itemId) : null;
-
-        $.ajax({
-            url: 'manage_items.php',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (response) {
-                $('#editItemModal').modal('hide');
-                alert(response);
-                loadItems();
-                // Reload or update item display if needed
-            }
-        });
+                $('#editItemModal').modal('show');
+            })
+            .catch((error) => {
+                console.error('Error loading form:', error)
+            });
     });
 
     // Delete an item
@@ -211,8 +198,14 @@ $(document).ready(function () {
                     },
                     beforeSend: function () {
                         Swal.fire({
-                            text: `กำลังลบ .. `,
-                            icon: "info",
+                            html: ` <div class="d-flex flex-column flex-center gap-3">
+                                        <span class="fs-5 fw-bold">กำลังส่งข้อมูล</span>
+                                        <div class="load">
+                                            <span class="loading"></span>
+                                            <span class="loading"></span>
+                                            <span class="loading"></span>
+                                        </div>
+                                    </div>`,
                             buttonsStyling: false,
                             showConfirmButton: false,
                             allowOutsideClick: false
@@ -236,41 +229,85 @@ $(document).ready(function () {
 
     });
 
+    // Copy an item
+    $(document).on('click', '.copy-btn', function () {
+        const itemId = $(this).parent().parent().data('id');
+        const itemType = $(this).data('type');
+        $.post('manage_items.php', { action: 'copy_item', id: itemId, type_id: itemType }, function (data) {
+            loadItems();
+        });
+    });
+
     // Edit an item
     $(document).on('click', '.edit-btn', function () {
 
-        $('#editItemModal .modal-title').html('Edit Card');
+        let itemType = $(this).data('type');
+        loadForm(itemType)
+            .then(() => {
 
-        $('#itemAvatar').val(null);
-        $('#itemAvatarPreview').attr('src', '');
-        $('#itemBG').val(null);
-        $('#itemBGPreview').attr('src', '');
-        $('#itemFrame').val(null);
-        $('#itemFramePreview').attr('src', '');
+                $('#editItemForm').trigger('reset');
 
-        itemId = $(this).parent().parent().data('id'); // Assign value to itemId
-        $.post('manage_items.php', { action: 'get_comp_settings', id: itemId }, function (data) {
-            const item = JSON.parse(data);
-            $('#editItemId').val(itemId);
-            $('#itemTitleName').val(item.item_pname);
-            $('#itemFirstName').val(item.item_fname);
-            $('#itemLastName').val(item.item_lname);
-            $('#itemWorkPosition').val(item.item_work_position);
+                itemId = $(this).parent().parent().data('id');
+                $.post('manage_items.php', { action: 'get_comp_settings', id: itemId }, function (data) {
+                    const item = JSON.parse(data);
+                    $('#editItemId').val(itemId);
 
-            $('#itemSize').val(item.item_size); // From items
-            $('#itemFrameSize').val(item.item_frame_size);
+                    console.log(item);
+                    
 
-            $('#itemAvatarPreview').attr('src', `./uploads/${item.item_avatar}`);
-            initIMGPreview('itemAvatar', 'itemAvatarPreview');
+                    if (itemType == 1) {
+                        // Setup Modal
+                        $('#editItemModal .modal-title').html('Edit Card');
+                        $('#editItemModal .modal-dialog').attr('class', 'modal-dialog modal-lg');
+                        // Setup Form
+                        $('#itemTitleName').val(item.item_pname);
+                        $('#itemFirstName').val(item.item_fname);
+                        $('#itemLastName').val(item.item_lname);
+                        $('#itemWorkPosition').val(item.item_work_position);
 
-            $('#itemBGPreview').attr('src', `./uploads/${item.item_bg}`);
-            initIMGPreview('itemBG', 'itemBGPreview');
+                        $('#itemSize').val(item.item_size); // From items
+                        $('#itemFrameSize').val(item.item_frame_size);
 
-            $('#itemFramePreview').attr('src', `./uploads/${item.item_frame}`);
-            initIMGPreview('itemFrame', 'itemFramePreview');
+                        $('#itemAvatarPreview').attr('src', `uploads/${item.item_avatar}`);
+                        initIMGPreview('itemAvatar', 'itemAvatarPreview');
 
-            $('#editItemModal').modal('show');
-        });
+                        $('#itemBGPreview').attr('src', `uploads/${item.item_bg}`);
+                        initIMGPreview('itemBG', 'itemBGPreview');
+
+                        $('#itemFramePreview').attr('src', `uploads/${item.item_frame}`);
+                        initIMGPreview('itemFrame', 'itemFramePreview');
+
+                    }
+                    else if (itemType == 2) {
+                        // Setup Modal
+                        $('#editItemModal .modal-title').html('Edit Image');
+                        $('#editItemModal .modal-dialog').attr('class', 'modal-dialog');
+                        // Setup Form
+                        $('#itemIMGPreview').attr('src', `uploads/${item.item_img}`);
+                        initIMGPreview('itemIMG', 'itemIMGPreview');
+
+                        $('#itemSizeIMG').val(item.item_img_size);
+
+                    }
+                    else if (itemType == 3) {
+
+                        $('#editItemModal .modal-title').html('Edit Text');
+                        $('#editItemModal .modal-dialog').attr('class', 'modal-dialog');
+
+                        $('#itemTXT').val(item.item_txt);
+                        $('#itemTXTSize').val(item.item_txt_size);
+                        $('#itemTXTWeight').val(item.item_txt_weight);
+                        $('#itemTXTColor').val(item.item_txt_color);
+
+                    }
+
+                    $('#editItemModal').modal('show');
+                });
+
+            })
+            .catch((error) => {
+                console.error('Error loading form:', error)
+            });
     });
 
     $(document).on('click', '.save-btn', function () {
@@ -298,17 +335,21 @@ $(document).ready(function () {
     });
 
     function loadForm(itemType) {
-        $('#editItemForm').html('');
-        $.post('manage_form.php', { item_type: itemType }, function (data) {
-            $('#editItemForm').html(data);
+        return new Promise((resolve, reject) => {
+            $('#editItemForm').html('');
+            $.post('manage_form.php', { item_type: itemType }, function (data) {
+                $('#editItemForm').html(data);
+                resolve(); // Resolve the Promise once data is loaded
+            }).fail((error) => {
+                reject(error); // Reject the Promise if there's an error
+            });
         });
     }
 
     function initIMGPreview(input_id, preview_id) {
-        
+
         $(`#${input_id}`).on('change', function (event) {
             const file = event.target.files[0];
-            console.log(preview_id+" changed");
 
             if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
@@ -351,7 +392,6 @@ $(document).ready(function () {
 
     // Handle the form submission to update the background URL
     $('#editAreaForm').on('submit', function (e) {
-        console.log('area edited');
         e.preventDefault();
 
         const formData = new FormData(this);

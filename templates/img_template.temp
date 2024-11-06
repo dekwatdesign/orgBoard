@@ -1,0 +1,16 @@
+<style>
+    .item-img-card-{{item_id}} {
+        background-color: transparent;
+        width: fit-content;
+        height: fit-content;
+        position: relative;
+    }
+    .item-img-img-{{item_id}} {
+        width: {{img_width}}px;
+        height: {{img_height}}px;
+        object-fit: contain;
+    }
+</style>
+<div class="item-img-card-{{item_id}}">
+    <img src="uploads/{{img_filename}}" class="item-img-img-{{item_id}}">
+</div>
