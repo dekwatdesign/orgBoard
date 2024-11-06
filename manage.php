@@ -49,12 +49,7 @@ $area_size_height = $area_settings_row['size_height'];
             /* width: 100px; */
             /* height: 100px; */
         }
-
-        .card-org {
-            background-color: #f8f9fa;
-            border: 1px solid rgba(0, 0, 0, 0.125);
-            border-radius: 0.25rem;
-        }
+        
     </style>
 </head>
 

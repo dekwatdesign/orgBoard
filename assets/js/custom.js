@@ -12,7 +12,7 @@ $(document).ready(function () {
                 const itemElement = $(`
                     <div class="item d-flex flex-row flex-nowrap" data-id="${item.item_id}" style="left: ${item.x_pos}px; top: ${item.y_pos}px;">
                         ${itemHTML}
-                        <div class="d-flex flex-column gap-1">
+                        <div class="d-flex flex-column gap-1 ps-1">
                             <button class="btn btn-sm btn-icon btn-secondary edit-btn">✏️</button>
                             <button class="btn btn-sm btn-icon btn-secondary copy-btn">📋</button>
                             <button class="btn btn-sm btn-icon btn-secondary delete-btn">🗑️</button>
@@ -38,28 +38,59 @@ $(document).ready(function () {
             }
         });
 
+        const frame_size = 10;
+
         // Construct the HTML string
         const htmlString = `
             <style>
+                .item-leader-${data.item_id} {
+                    background-color: #FFFFFF;
+                    width: ${data.size_width}px;
+                    height: calc(${data.size_height}px + 30px);
+                    position: relative;
+                }
+                .item-leader-${data.item_id}::before {
+                    content: ' ';
+                    position: absolute;
+                    border-image-source: url('uploads/Frame_04.svg');
+                    border-image-slice: 70;
+                    border-image-repeat: stretch;
+                    border-style: solid;
+                    border-width: ${frame_size}px;
+                    width: ${data.size_width}px;
+                    height: calc(${data.size_height}px + 30px);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 10px;
+                    z-index: 2;
+                }
                 .item-avatar-${data.item_id} {
                     position: absolute; 
-                    width: ${data.size_width}px;
-                    height: ${data.size_height}px;
+                    top: ${frame_size}px;
+                    left: ${frame_size}px;
+                    width: calc(${data.size_width}px - ${frame_size}px - ${frame_size}px);
+                    height: calc(${data.size_height}px - ${frame_size}px - ${frame_size}px);
                     background-repeat: no-repeat;
                     background-size: contain;
                     border-image: url('uploads/${compArr['frameIMG']}') 500 / ${data.size_height}px;
+                    z-index: 1;
                 }
                 .item-frame-${data.item_id} {
                     position: absolute; 
-                    width: ${data.size_width}px;
-                    height: ${data.size_height}px;
+                    top: ${frame_size}px;
+                    left: ${frame_size}px;
+                    width: calc(${data.size_width}px - ${frame_size}px - ${frame_size}px);
+                    height: calc(${data.size_height}px - ${frame_size}px - ${frame_size}px);
                     background-repeat: no-repeat; 
                     background-size: contain; 
                     background-image: url('uploads/${compArr['leaderIMG']}');
                     background-position: center;
+                    z-index: 1;
                 }
             </style>
-            <div style="position: relative; width: ${data.size_width}px; height: ${data.size_height}px;" class="card-org" >
+            <div class="card-org item-leader-${data.item_id}">
                 <div class="item-avatar-${data.item_id}"></div>
                 <div class="item-frame-${data.item_id}"></div>
             </div>
