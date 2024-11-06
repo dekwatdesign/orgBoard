@@ -12,6 +12,7 @@ $area_settings_query = mysqli_query($conn, $area_settings_sql);
 $area_settings_row = mysqli_fetch_assoc($area_settings_query);
 $area_size_width = $area_settings_row['size_width'];
 $area_size_height = $area_settings_row['size_height'];
+
 ?>
 
 <!DOCTYPE html>
@@ -49,7 +50,6 @@ $area_size_height = $area_settings_row['size_height'];
             /* width: 100px; */
             /* height: 100px; */
         }
-        
     </style>
 </head>
 
@@ -57,7 +57,9 @@ $area_size_height = $area_settings_row['size_height'];
     <div class="container">
         <h1 class="text-center mt-4">Image Management System</h1>
         <div class="mb-3">
-            <button class="btn btn-primary" id="addItemBtn">Add Item</button>
+            <button class="btn btn-icon btn-primary btn-add-item" data-type="1"><i class="fa-solid fa-clipboard-user fs-2"></i></button>
+            <button class="btn btn-icon btn-primary btn-add-item" data-type="2"><i class="fa-regular fa-image fs-2"></i></button>
+            <button class="btn btn-icon btn-primary btn-add-item" data-type="3"><i class="fa-solid fa-font fs-2"></i></button>
             <button class="btn btn-secondary" id="editAreaBtn">Edit Area Background</button>
         </div>
         <div id="area"></div>
@@ -65,53 +67,15 @@ $area_size_height = $area_settings_row['size_height'];
 
     <!-- Modal for editing item -->
     <div class="modal fade" id="editItemModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Edit Item</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body bg-light">
                     <form id="editItemForm" enctype="multipart/form-data">
-                        <input type="hidden" id="editItemId">
-                        <div class="mb-3">
-                            <label for="itemTitleName" class="form-label required">Title Name</label>
-                            <select id="itemTitleName" name="itemTitleName" class="form-select" required>
-                                <option value="1">นาย</option>
-                                <option value="2">นาง</option>
-                                <option value="3">นางสาว</option>
-                                <option value="4">พระ</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="itemFirstName" class="form-label required">First Name</label>
-                            <input type="text" class="form-control" id="itemFirstName" name="itemFirstName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="itemLastName" class="form-label required">Last Name</label>
-                            <input type="text" class="form-control" id="itemLastName" name="itemLastName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="itemWorkPosition" class="form-label required">Work Position</label>
-                            <input type="text" class="form-control" id="itemWorkPosition" name="itemWorkPosition" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="itemAvatar" class="form-label required">Avatar Image</label>
-                            <div class="d-flex flex-row gap-2 mb-2">
-                                <span class="mt-4 text-gray-500">Preview:</span>
-                                <img id="itemAvatarPreview" src="" alt="Avatar Preview" class="img-thumbnail mt-2 w-100px h-100px" style="object-fit: contain;">
-                            </div>
-                            <input type="file" class="form-control" accept="image/*" id="itemAvatar" name="itemAvatar">
-                        </div>
-                        <div class="mb-3">
-                            <label for="itemFrame" class="form-label required">Frame Image</label>
-                            <div class="d-flex flex-row gap-2 mb-2">
-                                <span class="mt-4 text-gray-500">Preview:</span>
-                                <img id="itemFramePreview" src="" alt="Frame Preview" class="img-thumbnail mt-2 w-100px h-100px" style="object-fit: contain;">
-                            </div>
-                            <input type="file" class="form-control" accept="image/*" id="itemFrame" name="itemFrame">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
+                        
                     </form>
                 </div>
             </div>

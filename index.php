@@ -44,17 +44,14 @@ $conn->close();
             position: relative;
             width: <?php echo $area_size_width ?>px;
             height: <?php echo $area_size_height ?>px;
-            background-image: url('<?php echo $background_url; ?>');
             background-size: cover;
             background-position: center;
             border: 1px solid #ccc;
             margin: 20px auto;
         }
 
-        .display-item {
+        .item {
             position: absolute;
-            width: 100px;
-            height: 100px;
         }
     </style>
 </head>
@@ -62,18 +59,131 @@ $conn->close();
 <body>
     <div class="container">
         <h1 class="text-center mt-4">Image Display</h1>
-        <div id="display-area" style="background-image: url('<?php echo $background_url; ?>');">
-            <?php foreach ($items as $item): ?>
-                <div class="display-item"
-                    style="left: <?php echo $item['x_pos']; ?>px; top: <?php echo $item['y_pos']; ?>px; width: <?php echo $item['size_width']; ?>px; height: <?php echo $item['size_height']; ?>px;">
-                    <img src="<?php echo $item['image_url']; ?>" class="img-fluid"
-                        style="border-image: url('<?php echo $item['frame_url']; ?>') 30 / 10px;">
-                </div>
-            <?php endforeach; ?>
+        <div class="scroll pe-5"
+            data-kt-scroll="true"
+            data-kt-scroll-height="auto"
+            data-kt-scroll-offset="100px">
+            <div id="display-area"></div>
         </div>
 
+
     </div>
-    <script src="./assets/js/scripts.bundle.js"></script>
+    <script src="assets/js/scripts.bundle.js"></script>
+    <script src="assets/js/jquery-3.7.1.min.js"></script>
+    <script src="assets/js/jquery-ui.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            loadItems();
+            loadAreaBackground();
+
+            // Load items from the database
+            function loadItems() {
+                $.post('manage_items.php', {
+                    action: 'get_items'
+                }, function(data) {
+                    const items = JSON.parse(data);
+                    $('#display-area').empty();
+
+                    // Loop through each item
+                    items.forEach(item => {
+                        // Use Promise to handle the asynchronous HTML generation
+                        convertJsonToHtml(item).then((itemHTML) => {
+                            const itemElement = $(`
+                                                    <div class="item d-flex flex-row flex-nowrap" data-id="${item.item_id}" style="left: ${item.x_pos}px; top: ${item.y_pos}px;">
+                                                        ${itemHTML}
+                                                    </div>
+                                                `);
+                            // Append the item element to the area container
+                            $('#display-area').append(itemElement);
+                        }).catch((error) => {
+                            console.error('Error generating item HTML:', error);
+                        });
+                    });
+                });
+            }
+
+            function loadAreaBackground() {
+                $.post('save_area.php', {
+                    action: 'get_background'
+                }, function(data) {
+                    $('#display-area').css('background-image', `url('uploads/${data.background_url}')`);
+                });
+            }
+
+            function convertJsonToHtml(data) {
+
+                return new Promise((resolve, reject) => {
+                    let compArr = [];
+
+                    const comp = data.comp;
+
+                    // Load the template and populate placeholders
+                    $.get("templates/leader_card_template.temp", function(template) {
+
+                        const replacements = [{
+                                placeholder: '{{item_pname}}',
+                                value: comp.item_pname
+                            },
+                            {
+                                placeholder: '{{item_fname}}',
+                                value: comp.item_fname
+                            },
+                            {
+                                placeholder: '{{item_lname}}',
+                                value: comp.item_lname
+                            },
+
+                            {
+                                placeholder: '{{item_work_position}}',
+                                value: comp.item_work_position
+                            },
+
+                            {
+                                placeholder: '{{item_id}}',
+                                value: data.item_id
+                            },
+                            {
+                                placeholder: '{{item_bg}}',
+                                value: comp.item_bg
+                            },
+                            {
+                                placeholder: '{{size_width}}',
+                                value: data.size_width
+                            },
+                            {
+                                placeholder: '{{size_height}}',
+                                value: data.size_height
+                            },
+                            {
+                                placeholder: '{{item_frame_size}}',
+                                value: comp.item_frame_size
+                            },
+                            {
+                                placeholder: '{{item_avatar}}',
+                                value: comp.item_avatar
+                            },
+                            {
+                                placeholder: '{{item_frame}}',
+                                value: comp.item_frame
+                            }
+                        ];
+
+                        // Use the array to replace the placeholders in the template
+                        let htmlString = template;
+
+                        replacements.forEach(replacement => {
+                            const regex = new RegExp(replacement.placeholder, 'g');
+                            htmlString = htmlString.replace(regex, replacement.value);
+                        });
+
+                        resolve(htmlString); // Return the HTML as a resolved Promise
+                    }).fail((error) => {
+                        reject("Error loading the template"); // Handle errors
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

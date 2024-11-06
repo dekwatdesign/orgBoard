@@ -1,0 +1,82 @@
+<!-- leader_card_template.html -->
+<style>
+    .item-name-{{item_id}} {
+        font-size: clamp(0.25rem, 1vw, 0.5rem); /* ปรับขนาดตัวอักษรตามความกว้างของหน้าจอ */
+        white-space: nowrap;
+    }
+    .item-work-position-{{item_id}} {
+        font-size: clamp(0.22rem, 1vw, 0.44rem); /* ปรับขนาดตัวอักษรตามความกว้างของหน้าจอ */
+        white-space: nowrap;
+    }
+    .item-leader-{{item_id}} {
+        background-color: #FFFFFF;
+        width: {{size_width}}px;
+        height: calc({{size_height}}px + 30px);
+        position: relative;
+    }
+    .item-sign-{{item_id}} {
+        position: absolute;
+        bottom: 0;
+        border-image-source: url('assets/medias/sign.svg');
+        border-image-slice: 70;
+        border-image-repeat: stretch;
+        border-style: solid;
+        border-width: 10px;
+        background-color: transparent;
+        width: 100%;
+        height: calc(30px + 20px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    .item-frame-{{item_id}} {
+        position: absolute;
+        border-image-source: url('uploads/{{item_frame}}');
+        border-image-slice: 70;
+        border-image-repeat: stretch;
+        border-style: solid;
+        border-width: {{item_frame_size}}px;
+        width: {{size_width}}px;
+        height: calc({{size_height}}px + 30px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        box-shadow: inset rgba(0, 0, 0, 0.1) 0px 0 5px;
+    }
+    .item-avatar-{{item_id}} {
+        position: absolute; 
+        top: {{item_frame_size}}px;
+        left: {{item_frame_size}}px;
+        width: calc({{size_width}}px - {{item_frame_size}}px - {{item_frame_size}}px);
+        height: calc({{size_height}}px - {{item_frame_size}}px - {{item_frame_size}}px);
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-image: url('uploads/{{item_avatar}}');
+    }
+    .item-bg-{{item_id}} {
+        position: absolute; 
+        top: {{item_frame_size}}px;
+        left: {{item_frame_size}}px;
+        width: calc({{size_width}}px - {{item_frame_size}}px - {{item_frame_size}}px);
+        height: calc({{size_height}}px - {{item_frame_size}}px - {{item_frame_size}}px);
+        background-repeat: no-repeat; 
+        background-size: contain; 
+        background-image: url('uploads/{{item_bg}}');
+        background-position: center;
+    }
+</style>
+<div class="item-leader-{{item_id}}">
+    <div class="item-bg-{{item_id}}"></div>
+    <div class="item-avatar-{{item_id}}"></div>
+    <div class="item-frame-{{item_id}}"></div>
+    <div class="item-sign-{{item_id}}">
+        <div class="d-flex h-100 w-100 flex-column flex-center bg-dark gap-1">
+            <span class="text-white item-name-{{item_id}}">{{item_pname}}{{item_fname}} {{item_lname}}</span>
+            <span class="text-white item-work-position-{{item_id}}">{{item_work_position}}</span>
+        </div>
+    </div>
+</div>
