@@ -310,30 +310,6 @@ $(document).ready(function () {
             });
     });
 
-    $(document).on('click', '.save-btn', function () {
-        const displayArea = document.getElementById('area');
-        html2canvas(displayArea).then(canvas => {
-            const dataUrl = canvas.toDataURL("image/png");
-
-            // ส่งข้อมูล PNG ไปที่ backend
-            $.ajax({
-                url: 'save_image.php',
-                type: 'POST',
-                data: {
-                    imageData: dataUrl
-                },
-                success: function (response) {
-                    alert('Image saved successfully!');
-                },
-                error: function (error) {
-                    console.error('Error saving image:', error);
-                }
-            });
-        }).catch(function (error) {
-            console.error('Error converting display area to PNG:', error);
-        });
-    });
-
     function loadForm(itemType) {
         return new Promise((resolve, reject) => {
             $('#editItemForm').html('');
