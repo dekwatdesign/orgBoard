@@ -1,10 +1,10 @@
 <?php
-require_once 'configs/database.php';
-require_once 'includes/functions.php';
+require_once '../configs/database.php';
+require_once '../includes/functions.php';
 
 $action = $_POST['action'];
 
-$uploadDir = "uploads/";
+$uploadDir = "../uploads/";
 if (!file_exists($uploadDir)) {
     mkdir($uploadDir, 0777);
 }

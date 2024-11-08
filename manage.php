@@ -47,8 +47,16 @@ $area_size_height = $area_settings_row['size_height'];
         .item {
             position: absolute;
             cursor: move;
-            /* width: 100px; */
-            /* height: 100px; */
+            width: fit-content;
+            height: fit-content;
+        }
+
+        .item-tools:not(.show) {
+            display: none;
+        }
+
+        .item-tools.show {
+            display: flex;
         }
     </style>
 </head>
@@ -75,7 +83,7 @@ $area_size_height = $area_settings_row['size_height'];
                 </div>
                 <div class="modal-body bg-light">
                     <form id="editItemForm" enctype="multipart/form-data">
-                        
+
                     </form>
                 </div>
             </div>
@@ -105,13 +113,33 @@ $area_size_height = $area_settings_row['size_height'];
 
     <script src="assets/plugins/global/plugins.bundle.js"></script>
     <script src="assets/js/scripts.bundle.js"></script>
-
-    <!-- Include jQuery -->
     <script src="assets/js/jquery-3.7.1.min.js"></script>
-    <!-- Include jQuery UI -->
     <script src="assets/js/jquery-ui.min.js"></script>
 
+    <script>
+        const configs = {
+            orgb_selector: '#area',
+            orgb_dir: './uploads/',
+            sign_dir: './assets/medias/sign.svg',
+            temp_dir: './templates/',
+            actn_dir: './actions/',
+        };
+    </script>
     <script src="assets/js/custom.js"></script>
+    <script src="assets/js/custom_manager.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            loadAreaBackground();
+            loadItems().then(() => {
+                $(`${configs.orgb_selector} .item`).each(function(i, obj) {
+                    loadItemsTools($(this).data('id'), $(this).data('type'));
+                });
+            }).catch((error) => {
+                console.error("Error loading items:", error);
+            });
+        });
+    </script>
 </body>
 
 </html>

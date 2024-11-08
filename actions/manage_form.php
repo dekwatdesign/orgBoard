@@ -1,6 +1,6 @@
 <?php
-require_once 'configs/database.php';
-require_once 'includes/functions.php';
+require_once '../configs/database.php';
+require_once '../includes/functions.php';
 
 $list_s_area = [];
 $list_s_area_sql = "SELECT * FROM area_sizes";

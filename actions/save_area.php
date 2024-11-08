@@ -1,5 +1,5 @@
 <?php
-require_once 'configs/database.php';
+require_once '../configs/database.php';
 
 $action = $_POST['action'] ?? null;
 
@@ -15,7 +15,7 @@ if ($action === 'update_background') {
             unlink($bg_path);
         }
 
-        $uploadDir = "uploads/";
+        $uploadDir = "../uploads/";
         if (!file_exists($uploadDir)) {
             mkdir($uploadDir, 0777);
         }
